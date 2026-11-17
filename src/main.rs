@@ -152,8 +152,6 @@ fn run(args: &Args) -> anyhow::Result<()> {
     if args.preview {
         #[cfg(feature = "preview")]
         {
-            #[cfg(windows)]
-            win::init_process();
             let mode = if args.live { services::DataMode::Live } else { services::DataMode::Demo };
             return preview::run(mode);
         }

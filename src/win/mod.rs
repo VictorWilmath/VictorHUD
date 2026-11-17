@@ -18,8 +18,9 @@ use windows::Win32::System::Memory::{GMEM_MOVEABLE, GlobalAlloc, GlobalLock, Glo
 use windows::Win32::System::WinRT::{RO_INIT_MULTITHREADED, RoInitialize};
 use windows::Win32::UI::HiDpi::{DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2, SetProcessDpiAwarenessContext};
 
-/// Process-wide setup shared by the overlay and the live preview.
-pub fn init_process() {
+/// Process-wide setup for the overlay. Not for the preview: winit needs the main thread in a
+/// single-threaded COM apartment, and the preview's media thread sets up its own.
+fn init_process() {
     unsafe {
         // Physical pixels everywhere, so captures and synthetic clicks line up on scaled displays.
         let _ = SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
