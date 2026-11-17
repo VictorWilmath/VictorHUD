@@ -33,7 +33,7 @@ enum FeedFilter {
 pub fn draw(ui: &mut Ui, ctx: &mut UiCtx, panel: &PanelInfo) {
     let palette = ctx.palette;
     let state = ctx.state;
-    let tab_id = egui::Id::new(("vrcx-tab", panel.id.0));
+    let tab_id = egui::Id::unique(("vrcx-tab", panel.id.0));
     let mut tab: Tab = ui.data(|d| d.get_temp(tab_id)).unwrap_or_default();
 
     ui.horizontal(|ui| {
@@ -250,7 +250,7 @@ fn friend_row(ui: &mut Ui, ctx: &mut UiCtx, friend: &crate::services::vrcx::Frie
 fn feed_tab(ui: &mut Ui, ctx: &mut UiCtx, panel: &PanelInfo) {
     let palette = ctx.palette;
     let state = ctx.state;
-    let filter_id = egui::Id::new(("vrcx-feed-filter", panel.id.0));
+    let filter_id = egui::Id::unique(("vrcx-feed-filter", panel.id.0));
     let mut filter: FeedFilter = ui.data(|d| d.get_temp(filter_id)).unwrap_or_default();
     ui.horizontal(|ui| {
         for (value, label) in [

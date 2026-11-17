@@ -37,7 +37,7 @@ const ACCENTS: [[u8; 3]; 6] = [[120, 140, 255], [168, 120, 255], [255, 110, 170]
 
 pub fn draw(ui: &mut Ui, ctx: &mut UiCtx) {
     let palette = ctx.palette;
-    let section_id = egui::Id::new("settings-section");
+    let section_id = egui::Id::unique("settings-section");
     let mut section: Section = ui.data(|d| d.get_temp(section_id)).unwrap_or_default();
     let before = ctx.config.clone();
 

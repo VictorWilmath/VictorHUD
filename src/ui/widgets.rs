@@ -229,7 +229,7 @@ pub fn artwork(ui: &mut Ui, palette: &Palette, texture: Option<&TextureHandle>, 
 
 /// Keeps one GPU texture per artwork id alive in the egui context.
 pub fn artwork_texture(ctx: &egui::Context, artwork: &Artwork) -> TextureHandle {
-    let id = egui::Id::new(("artwork", artwork.id));
+    let id = egui::Id::unique(("artwork", artwork.id));
     if let Some(texture) = ctx.data(|data| data.get_temp::<TextureHandle>(id)) {
         return texture;
     }
@@ -262,7 +262,7 @@ pub fn empty_state(ui: &mut Ui, palette: &Palette, icon: Icon, title: &str, deta
 /// Draws a laser hit marker where the VR pointer hovers.
 pub fn pointer_marker(ui: &Ui, palette: &Palette) {
     if let Some(pos) = ui.input(|input| input.pointer.hover_pos()) {
-        let painter = ui.ctx().layer_painter(egui::LayerId::new(egui::Order::Tooltip, egui::Id::new("laser-dot")));
+        let painter = ui.ctx().layer_painter(egui::LayerId::new(egui::Order::Tooltip, egui::Id::unique("laser-dot")));
         painter.circle_filled(pos, 7.0, palette.accent.gamma_multiply(0.35));
         painter.circle_stroke(pos, 7.0, Stroke::new(2.0, Color32::WHITE));
         painter.circle_filled(pos, 2.5, Color32::WHITE);

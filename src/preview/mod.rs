@@ -4,7 +4,7 @@
 use std::time::{Duration, SystemTime};
 
 use chrono::Local;
-use egui::{Align, Color32, Layout, RichText, Sense, Ui, vec2};
+use egui::{Align, Color32, Layout, RichText, Sense, Ui};
 
 use crate::hud::Hud;
 use crate::services::desktop::CaptureTarget;
@@ -245,9 +245,15 @@ impl eframe::App for PreviewApp {
             });
         });
 
+        let actions = std::mem::take(&mut ui_ctx.actions);
+        let config_changed = ui_ctx.config_changed;
+        drop(ui_ctx);
+        if config_changed {
+            self.hud.mark_config_dirty();
+        }
         if let Some((notification, alpha)) = self.hud_toast() {
             let width = ui::TOAST_SIZE.x;
-            egui::Area::new(egui::Id::new("toast"))
+            egui::Area::new(egui::Id::unique("toast"))
                 .order(egui::Order::Foreground)
                 .fixed_pos(egui::pos2(full.center().x - width / 2.0, full.min.y + 18.0))
                 .show(&ctx, |ui| {
@@ -259,12 +265,6 @@ impl eframe::App for PreviewApp {
             ctx.request_repaint();
         }
 
-        let actions = std::mem::take(&mut ui_ctx.actions);
-        let config_changed = ui_ctx.config_changed;
-        drop(ui_ctx);
-        if config_changed {
-            self.hud.mark_config_dirty();
-        }
         if let Some(id) = focus_change {
             self.focused = Some(id);
         }

@@ -465,7 +465,7 @@ mod tests {
         write_demo_database(&path).unwrap();
         let snapshot = read_snapshot(&path);
         assert_eq!(snapshot.status, VrcxStatus::Ready);
-        assert_eq!(snapshot.user_prefix.as_deref(), Some("usr0b1c2d3e00004000800000000000001"));
+        assert_eq!(snapshot.user_prefix.as_deref(), Some("usr0b1c2d3e000040008000000000000001"));
 
         // Newest first, all three feed tables merged.
         assert_eq!(snapshot.feed.len(), 11);
@@ -502,7 +502,7 @@ mod tests {
             .unwrap();
         }
         let snapshot = read_snapshot(&path);
-        assert_eq!(snapshot.user_prefix.as_deref(), Some("usr0b1c2d3e00004000800000000000001"));
+        assert_eq!(snapshot.user_prefix.as_deref(), Some("usr0b1c2d3e000040008000000000000001"));
     }
 
     #[test]
