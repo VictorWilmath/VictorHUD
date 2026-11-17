@@ -26,35 +26,35 @@ pub fn header(ui: &mut Ui, ctx: &mut UiCtx, panel: &PanelInfo) {
         let (rect, _) = ui.allocate_exact_size(Vec2::splat(22.0), Sense::hover());
         icons::paint(ui.painter(), rect, kind_icon(panel.kind), palette.accent);
         ui.label(RichText::new(panel.kind.title()).size(18.0).strong());
+        // Narrow panels drop the opacity button so the toolbar doesn't run into the title.
+        let compact = ui.available_width() < FULL_TOOLBAR_WIDTH;
 
         ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
             ui.spacing_mut().item_spacing.x = 4.0;
-            if icon_button(ui, &palette, Icon::Close, 34.0, ButtonKind::Ghost, false)
-                .on_hover_text("Close")
-                .clicked()
-            {
+            if icon_button(ui, &palette, Icon::Close, 34.0, ButtonKind::Ghost, false).on_hover_text("Close").clicked() {
                 ctx.act(Action::Panel(id, PanelAction::Close));
             }
             separator(ui);
-            if icon_button(ui, &palette, Icon::Plus, 34.0, ButtonKind::Ghost, false)
-                .on_hover_text("Larger")
-                .clicked()
-            {
+            if icon_button(ui, &palette, Icon::Plus, 34.0, ButtonKind::Ghost, false).on_hover_text("Larger").clicked() {
                 ctx.act(Action::Panel(id, PanelAction::AdjustSize(1.15)));
             }
-            if icon_button(ui, &palette, Icon::Minus, 34.0, ButtonKind::Ghost, false)
-                .on_hover_text("Smaller")
-                .clicked()
+            if icon_button(ui, &palette, Icon::Minus, 34.0, ButtonKind::Ghost, false).on_hover_text("Smaller").clicked()
             {
                 ctx.act(Action::Panel(id, PanelAction::AdjustSize(1.0 / 1.15)));
             }
-            let opacity = format!("{:.0}%", panel.opacity * 100.0);
-            if ui
-                .add(egui::Button::new(RichText::new(opacity).size(13.0)).corner_radius(17).min_size(egui::vec2(52.0, 34.0)))
-                .on_hover_text("Opacity")
-                .clicked()
-            {
-                ctx.act(Action::Panel(id, PanelAction::AdjustOpacity(-0.2)));
+            if !compact {
+                let opacity = format!("{:.0}%", panel.opacity * 100.0);
+                if ui
+                    .add(
+                        egui::Button::new(RichText::new(opacity).size(13.0))
+                            .corner_radius(17)
+                            .min_size(egui::vec2(52.0, 34.0)),
+                    )
+                    .on_hover_text("Opacity")
+                    .clicked()
+                {
+                    ctx.act(Action::Panel(id, PanelAction::AdjustOpacity(-0.2)));
+                }
             }
             separator(ui);
             if icon_button(ui, &palette, Icon::Pointer, 34.0, ButtonKind::Ghost, panel.click_through)
@@ -77,7 +77,8 @@ pub fn header(ui: &mut Ui, ctx: &mut UiCtx, panel: &PanelInfo) {
                 (Placement::World, Icon::Pin, "Pin in place"),
             ] {
                 let active = panel.placement == placement;
-                if icon_button(ui, &palette, icon, 34.0, ButtonKind::Ghost, active).on_hover_text(tip).clicked() && !active
+                if icon_button(ui, &palette, icon, 34.0, ButtonKind::Ghost, active).on_hover_text(tip).clicked()
+                    && !active
                 {
                     ctx.act(Action::Panel(id, PanelAction::SetPlacement(placement)));
                 }
@@ -85,6 +86,9 @@ pub fn header(ui: &mut Ui, ctx: &mut UiCtx, panel: &PanelInfo) {
         });
     });
 }
+
+/// Width of the right-hand toolbar with every button, plus a little breathing room.
+const FULL_TOOLBAR_WIDTH: f32 = 420.0;
 
 fn separator(ui: &mut Ui) {
     let (rect, _) = ui.allocate_exact_size(egui::vec2(9.0, 22.0), Sense::hover());

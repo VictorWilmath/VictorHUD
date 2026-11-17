@@ -40,10 +40,7 @@ pub const PANEL_RADIUS: u8 = 26;
 pub const CARD_RADIUS: u8 = 16;
 
 pub fn card_frame(palette: &Palette) -> egui::Frame {
-    egui::Frame::new()
-        .fill(palette.card)
-        .corner_radius(CornerRadius::same(CARD_RADIUS))
-        .inner_margin(Margin::same(12))
+    egui::Frame::new().fill(palette.card).corner_radius(CornerRadius::same(CARD_RADIUS)).inner_margin(Margin::same(12))
 }
 
 pub fn panel_frame(palette: &Palette) -> egui::Frame {

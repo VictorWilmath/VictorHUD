@@ -33,7 +33,8 @@ const SECTIONS: [(Section, Icon, &str); 8] = [
     (Section::About, Icon::Globe, "About"),
 ];
 
-const ACCENTS: [[u8; 3]; 6] = [[120, 140, 255], [168, 120, 255], [255, 110, 170], [255, 160, 80], [70, 210, 160], [80, 190, 255]];
+const ACCENTS: [[u8; 3]; 6] =
+    [[120, 140, 255], [168, 120, 255], [255, 110, 170], [255, 160, 80], [70, 210, 160], [80, 190, 255]];
 
 pub fn draw(ui: &mut Ui, ctx: &mut UiCtx) {
     let palette = ctx.palette;
@@ -55,7 +56,6 @@ pub fn draw(ui: &mut Ui, ctx: &mut UiCtx) {
         ui.vertical(|ui| {
             ScrollArea::vertical().id_salt(("settings", section as u8)).auto_shrink([false, false]).show(ui, |ui| {
                 ui.set_width(ui.available_width() - 8.0);
-                ui.spacing_mut().slider_width = (ui.available_width() - 250.0).max(140.0);
                 match section {
                     Section::General => general(ui, ctx),
                     Section::Watch => watch(ui, ctx),
@@ -106,9 +106,19 @@ fn group(ui: &mut Ui, palette: &Palette, title: &str, add: impl FnOnce(&mut Ui))
     ui.add_space(6.0);
 }
 
+/// Fixed-width, left-aligned label column shared by slider and colour rows.
+fn row_label(ui: &mut Ui, palette: &Palette, label: &str) {
+    ui.allocate_ui_with_layout(vec2(170.0, 22.0), egui::Layout::left_to_right(egui::Align::Center), |ui| {
+        ui.set_width(170.0);
+        ui.add(egui::Label::new(RichText::new(label).color(palette.text)).truncate());
+    });
+}
+
 fn slider_row(ui: &mut Ui, palette: &Palette, label: &str, slider: Slider<'_>) {
     ui.horizontal(|ui| {
-        ui.add_sized(vec2(170.0, 22.0), egui::Label::new(RichText::new(label).color(palette.text)).truncate());
+        row_label(ui, palette, label);
+        // Leave room for the value box egui draws after the slider.
+        ui.spacing_mut().slider_width = (ui.available_width() - 96.0).max(100.0);
         ui.add(slider);
     });
 }
@@ -128,7 +138,7 @@ fn general(ui: &mut Ui, ctx: &mut UiCtx) {
     });
     group(ui, &palette, "Appearance", |ui| {
         ui.horizontal(|ui| {
-            ui.add_sized(vec2(170.0, 22.0), egui::Label::new("Accent colour"));
+            row_label(ui, &palette, "Accent colour");
             for accent in ACCENTS {
                 let (rect, response) = ui.allocate_exact_size(vec2(28.0, 28.0), Sense::click());
                 let color = Color32::from_rgb(accent[0], accent[1], accent[2]);
@@ -157,7 +167,13 @@ fn general(ui: &mut Ui, ctx: &mut UiCtx) {
         );
     });
     group(ui, &palette, "Startup", |ui| {
-        widgets::toggle_row(ui, &palette, "Start with SteamVR", "Launch VictorHUD automatically", &mut start_with_steamvr);
+        widgets::toggle_row(
+            ui,
+            &palette,
+            "Start with SteamVR",
+            "Launch VictorHUD automatically",
+            &mut start_with_steamvr,
+        );
         if ui.button(RichText::new("Quit VictorHUD").color(palette.bad)).clicked() {
             ctx.act(Action::Quit);
         }
@@ -169,7 +185,7 @@ fn watch(ui: &mut Ui, ctx: &mut UiCtx) {
     let palette = ctx.palette;
     group(ui, &palette, "Placement", |ui| {
         ui.horizontal(|ui| {
-            ui.add_sized(vec2(170.0, 22.0), egui::Label::new("Watch hand"));
+            row_label(ui, &palette, "Watch hand");
             for hand in [Hand::Left, Hand::Right] {
                 if widgets::chip(ui, &palette, hand.label(), ctx.config.watch.hand == hand).clicked() {
                     ctx.config.watch.hand = hand;
@@ -193,12 +209,41 @@ fn watch(ui: &mut Ui, ctx: &mut UiCtx) {
     });
     group(ui, &palette, "Raise to look", |ui| {
         let watch = &mut ctx.config.watch;
-        slider_row(ui, &palette, "Wrist tilt tolerance", Slider::new(&mut watch.facing_angle, 15.0..=75.0).suffix("°").fixed_decimals(0));
-        slider_row(ui, &palette, "Gaze tolerance", Slider::new(&mut watch.view_angle, 15.0..=70.0).suffix("°").fixed_decimals(0));
-        slider_row(ui, &palette, "Max distance", Slider::new(&mut watch.max_distance, 0.4..=1.0).suffix(" m").fixed_decimals(2));
-        slider_row(ui, &palette, "Show after", Slider::new(&mut watch.show_delay, 0.0..=0.8).suffix(" s").fixed_decimals(2));
-        slider_row(ui, &palette, "Hide after", Slider::new(&mut watch.hide_delay, 0.0..=2.0).suffix(" s").fixed_decimals(2));
-        hint(ui, &palette, "Raise your wrist like you're checking the time. Loosen the tolerances if the watch is hard to bring up.");
+        slider_row(
+            ui,
+            &palette,
+            "Wrist tilt tolerance",
+            Slider::new(&mut watch.facing_angle, 15.0..=75.0).suffix("°").fixed_decimals(0),
+        );
+        slider_row(
+            ui,
+            &palette,
+            "Gaze tolerance",
+            Slider::new(&mut watch.view_angle, 15.0..=70.0).suffix("°").fixed_decimals(0),
+        );
+        slider_row(
+            ui,
+            &palette,
+            "Max distance",
+            Slider::new(&mut watch.max_distance, 0.4..=1.0).suffix(" m").fixed_decimals(2),
+        );
+        slider_row(
+            ui,
+            &palette,
+            "Show after",
+            Slider::new(&mut watch.show_delay, 0.0..=0.8).suffix(" s").fixed_decimals(2),
+        );
+        slider_row(
+            ui,
+            &palette,
+            "Hide after",
+            Slider::new(&mut watch.hide_delay, 0.0..=2.0).suffix(" s").fixed_decimals(2),
+        );
+        hint(
+            ui,
+            &palette,
+            "Raise your wrist like you're checking the time. Loosen the tolerances if the watch is hard to bring up.",
+        );
     });
 }
 
@@ -206,13 +251,28 @@ fn interaction(ui: &mut Ui, ctx: &mut UiCtx) {
     let palette = ctx.palette;
     group(ui, &palette, "Laser", |ui| {
         let interaction = &mut ctx.config.interaction;
-        slider_row(ui, &palette, "Max length", Slider::new(&mut interaction.laser_max_length, 1.0..=10.0).suffix(" m").fixed_decimals(1));
+        slider_row(
+            ui,
+            &palette,
+            "Max length",
+            Slider::new(&mut interaction.laser_max_length, 1.0..=10.0).suffix(" m").fixed_decimals(1),
+        );
         widgets::toggle_row(ui, &palette, "Haptics", "Tick on hover and click", &mut interaction.haptics);
-        slider_row(ui, &palette, "Haptic strength", Slider::new(&mut interaction.haptic_strength, 0.0..=1.0).fixed_decimals(2));
+        slider_row(
+            ui,
+            &palette,
+            "Haptic strength",
+            Slider::new(&mut interaction.haptic_strength, 0.0..=1.0).fixed_decimals(2),
+        );
     });
     group(ui, &palette, "Scrolling", |ui| {
         let interaction = &mut ctx.config.interaction;
-        slider_row(ui, &palette, "Scroll speed", Slider::new(&mut interaction.scroll_speed, 2.0..=40.0).fixed_decimals(0));
+        slider_row(
+            ui,
+            &palette,
+            "Scroll speed",
+            Slider::new(&mut interaction.scroll_speed, 2.0..=40.0).fixed_decimals(0),
+        );
         widgets::toggle_row(ui, &palette, "Invert scrolling", "", &mut interaction.invert_scroll);
         widgets::toggle_row(
             ui,
@@ -239,10 +299,15 @@ fn desktop(ui: &mut Ui, ctx: &mut UiCtx) {
         let desktop = &mut ctx.config.desktop;
         slider_row(ui, &palette, "Frame rate limit", Slider::new(&mut desktop.max_fps, 10..=120).suffix(" fps"));
         widgets::toggle_row(ui, &palette, "Show mouse cursor", "", &mut desktop.show_cursor);
-        slider_row(ui, &palette, "New panel width", Slider::new(&mut desktop.default_width_m, 0.4..=3.0).suffix(" m").fixed_decimals(2));
+        slider_row(
+            ui,
+            &palette,
+            "New panel width",
+            Slider::new(&mut desktop.default_width_m, 0.4..=3.0).suffix(" m").fixed_decimals(2),
+        );
         if !monitors.is_empty() {
             ui.horizontal_wrapped(|ui| {
-                ui.add_sized(vec2(170.0, 22.0), egui::Label::new("Open first"));
+                row_label(ui, &palette, "Open first");
                 for monitor in monitors {
                     if widgets::chip(ui, &palette, &monitor.label, desktop.default_monitor == monitor.index).clicked() {
                         desktop.default_monitor = monitor.index;
@@ -275,14 +340,19 @@ fn notifications(ui: &mut Ui, ctx: &mut UiCtx) {
         let n = &mut ctx.config.notifications;
         widgets::toggle_row(ui, &palette, "Do not disturb", "Keep notifications in the inbox without popups", &mut dnd);
         ui.horizontal(|ui| {
-            ui.add_sized(vec2(170.0, 22.0), egui::Label::new("Show popups"));
+            row_label(ui, &palette, "Show popups");
             for (placement, label) in [(ToastPlacement::Head, "In view"), (ToastPlacement::Wrist, "Above the watch")] {
                 if widgets::chip(ui, &palette, label, n.placement == placement).clicked() {
                     n.placement = placement;
                 }
             }
         });
-        slider_row(ui, &palette, "Default duration", Slider::new(&mut n.default_duration, 1.0..=15.0).suffix(" s").fixed_decimals(1));
+        slider_row(
+            ui,
+            &palette,
+            "Default duration",
+            Slider::new(&mut n.default_duration, 1.0..=15.0).suffix(" s").fixed_decimals(1),
+        );
         slider_row(ui, &palette, "Keep history", Slider::new(&mut n.history_limit, 10..=500));
     });
     if dnd != ctx.config.notifications.do_not_disturb {
@@ -290,15 +360,25 @@ fn notifications(ui: &mut Ui, ctx: &mut UiCtx) {
     }
     group(ui, &palette, "XSOverlay-compatible receiver", |ui| {
         let n = &mut ctx.config.notifications;
-        widgets::toggle_row(ui, &palette, "Accept notifications", "From VRCX, VRCVideoCacher, OSC tools and others", &mut n.enabled);
+        widgets::toggle_row(
+            ui,
+            &palette,
+            "Accept notifications",
+            "From VRCX, VRCVideoCacher, OSC tools and others",
+            &mut n.enabled,
+        );
         ui.horizontal(|ui| {
-            ui.add_sized(vec2(170.0, 22.0), egui::Label::new("UDP port"));
+            row_label(ui, &palette, "UDP port");
             ui.add(egui::DragValue::new(&mut n.udp_port).range(1024..=65535));
             ui.add_space(12.0);
             ui.label("WebSocket port");
             ui.add(egui::DragValue::new(&mut n.websocket_port).range(1024..=65535));
         });
-        hint(ui, &palette, "Port and on/off changes apply the next time VictorHUD starts. Close XSOverlay first if it uses the same ports.");
+        hint(
+            ui,
+            &palette,
+            "Port and on/off changes apply the next time VictorHUD starts. Close XSOverlay first if it uses the same ports.",
+        );
     });
 }
 
@@ -313,20 +393,43 @@ fn vrcx(ui: &mut Ui, ctx: &mut UiCtx) {
             crate::services::vrcx::VrcxStatus::Error(_) => ("Error reading database", palette.bad),
         };
         ui.horizontal(|ui| {
-            ui.add_sized(vec2(170.0, 22.0), egui::Label::new("Status"));
+            row_label(ui, &palette, "Status");
             widgets::pill(ui, status.0, status.1);
         });
-        path_field(ui, &palette, "Database file", &mut ctx.config.vrcx.database_path, crate::config::default_vrcx_db_path());
-        path_field(ui, &palette, "VRChat log folder", &mut ctx.config.vrcx.vrchat_log_dir, crate::config::default_vrchat_log_dir());
-        hint(ui, &palette, "VictorHUD only reads VRCX's database and never writes to it. Path changes apply after a restart.");
+        path_field(
+            ui,
+            &palette,
+            "Database file",
+            &mut ctx.config.vrcx.database_path,
+            crate::config::default_vrcx_db_path(),
+        );
+        path_field(
+            ui,
+            &palette,
+            "VRChat log folder",
+            &mut ctx.config.vrcx.vrchat_log_dir,
+            crate::config::default_vrchat_log_dir(),
+        );
+        hint(
+            ui,
+            &palette,
+            "VictorHUD only reads VRCX's database and never writes to it. Path changes apply after a restart.",
+        );
     });
 }
 
-fn path_field(ui: &mut Ui, palette: &Palette, label: &str, value: &mut Option<std::path::PathBuf>, default: Option<std::path::PathBuf>) {
+fn path_field(
+    ui: &mut Ui,
+    palette: &Palette,
+    label: &str,
+    value: &mut Option<std::path::PathBuf>,
+    default: Option<std::path::PathBuf>,
+) {
     ui.horizontal(|ui| {
-        ui.add_sized(vec2(170.0, 22.0), egui::Label::new(label));
+        row_label(ui, palette, label);
         let mut text = value.as_ref().map(|p| p.display().to_string()).unwrap_or_default();
-        let placeholder = default.map(|p| p.display().to_string()).unwrap_or_else(|| "Not available on this system".into());
+        let placeholder =
+            default.map(|p| p.display().to_string()).unwrap_or_else(|| "Not available on this system".into());
         let response = ui.add(
             egui::TextEdit::singleline(&mut text)
                 .hint_text(RichText::new(placeholder).color(palette.text_faint))
@@ -345,8 +448,11 @@ fn about(ui: &mut Ui, ctx: &mut UiCtx) {
         ui.label(RichText::new("A wrist-first SteamVR overlay, written in Rust.").color(palette.text_dim));
         let config_path = Config::path();
         ui.horizontal(|ui| {
-            ui.add_sized(vec2(170.0, 22.0), egui::Label::new("Settings file"));
-            ui.add(egui::Label::new(RichText::new(config_path.display().to_string()).size(12.5).color(palette.text_dim)).truncate());
+            row_label(ui, &palette, "Settings file");
+            ui.add(
+                egui::Label::new(RichText::new(config_path.display().to_string()).size(12.5).color(palette.text_dim))
+                    .truncate(),
+            );
         });
         ui.horizontal(|ui| {
             if ui.button("Copy settings path").clicked() {

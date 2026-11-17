@@ -37,9 +37,11 @@ pub fn icon_button(ui: &mut Ui, palette: &Palette, icon: Icon, size: f32, kind: 
             ButtonKind::Ghost => Color32::TRANSPARENT,
         };
         let painter = ui.painter();
-        painter.rect_filled(rect, CornerRadius::same((size / 2.0) as u8), fill);
+        // A real circle: a square rect rounded by half its size can tessellate with folded
+        // triangles, which shows as faint lines through translucent fills.
+        painter.circle_filled(rect.center(), size / 2.0, fill);
         if hovered && kind == ButtonKind::Primary {
-            painter.rect_stroke(rect, size / 2.0, Stroke::new(2.0, Color32::from_white_alpha(70)), StrokeKind::Inside);
+            painter.circle_stroke(rect.center(), size / 2.0 - 1.0, Stroke::new(2.0, Color32::from_white_alpha(70)));
         }
         let color = match kind {
             ButtonKind::Primary => Color32::from_rgb(12, 12, 18),
@@ -52,8 +54,24 @@ pub fn icon_button(ui: &mut Ui, palette: &Palette, icon: Icon, size: f32, kind: 
     response
 }
 
+/// A non-interactive icon that sits inline with text.
+pub fn icon(ui: &mut Ui, icon: Icon, size: f32, color: Color32) {
+    let (rect, _) = ui.allocate_exact_size(Vec2::splat(size), Sense::hover());
+    if ui.is_rect_visible(rect) {
+        icons::paint(ui.painter(), rect, icon, color);
+    }
+}
+
 /// A large rounded tile with an icon and caption, used by the watch menu.
-pub fn tile(ui: &mut Ui, palette: &Palette, icon: Icon, label: &str, size: Vec2, active: bool, badge: usize) -> Response {
+pub fn tile(
+    ui: &mut Ui,
+    palette: &Palette,
+    icon: Icon,
+    label: &str,
+    size: Vec2,
+    active: bool,
+    badge: usize,
+) -> Response {
     let (rect, response) = ui.allocate_exact_size(size, Sense::click());
     if ui.is_rect_visible(rect) {
         let painter = ui.painter();
@@ -69,7 +87,8 @@ pub fn tile(ui: &mut Ui, palette: &Palette, icon: Icon, label: &str, size: Vec2,
             painter.rect_stroke(rect, 16.0, Stroke::new(1.0, palette.accent.gamma_multiply(0.7)), StrokeKind::Inside);
         }
         let icon_size = (size.y * 0.36).min(30.0);
-        let icon_rect = Rect::from_center_size(pos2(rect.center().x, rect.min.y + size.y * 0.38), Vec2::splat(icon_size));
+        let icon_rect =
+            Rect::from_center_size(pos2(rect.center().x, rect.min.y + size.y * 0.38), Vec2::splat(icon_size));
         icons::paint(painter, icon_rect, icon, if active { palette.accent } else { palette.text });
         painter.text(
             pos2(rect.center().x, rect.max.y - size.y * 0.2),

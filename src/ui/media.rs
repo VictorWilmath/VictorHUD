@@ -11,10 +11,15 @@ use crate::state::Action;
 use crate::util::format_duration;
 
 pub fn draw(ui: &mut Ui, ctx: &mut UiCtx) {
+    egui::ScrollArea::vertical().id_salt("media").auto_shrink([false, false]).show(ui, |ui| body(ui, ctx));
+}
+
+fn body(ui: &mut Ui, ctx: &mut UiCtx) {
     let state = ctx.state;
     let palette = ctx.palette;
     let Some(session) = state.media.active(state.preferred_media_session.as_deref()) else {
-        let detail = state.media.error.as_deref().unwrap_or("Start music or a video on your PC and it will show up here.");
+        let detail =
+            state.media.error.as_deref().unwrap_or("Start music or a video on your PC and it will show up here.");
         widgets::empty_state(ui, &palette, Icon::Music, "Nothing is playing", detail);
         volume_section(ui, ctx, None);
         return;
@@ -69,7 +74,10 @@ fn timeline(ui: &mut Ui, ctx: &mut UiCtx, session: &MediaSession) {
         return;
     };
     if let Some(fraction) = widgets::seek_bar(ui, &palette, session.progress(ctx.instant), session.can_seek) {
-        ctx.act(Action::Media(MediaCommand::Seek { session: session.id.clone(), position: duration.mul_f32(fraction) }));
+        ctx.act(Action::Media(MediaCommand::Seek {
+            session: session.id.clone(),
+            position: duration.mul_f32(fraction),
+        }));
     }
     ui.horizontal(|ui| {
         let position = session.live_position(ctx.instant).unwrap_or_default();
@@ -87,7 +95,10 @@ fn controls(ui: &mut Ui, ctx: &mut UiCtx, session: &MediaSession) {
         ui.spacing_mut().item_spacing.x = 12.0;
         let shuffle = session.shuffle.unwrap_or(false);
         ui.add_enabled_ui(session.shuffle.is_some(), |ui| {
-            if icon_button(ui, &palette, Icon::Shuffle, 40.0, ButtonKind::Ghost, shuffle).on_hover_text("Shuffle").clicked() {
+            if icon_button(ui, &palette, Icon::Shuffle, 40.0, ButtonKind::Ghost, shuffle)
+                .on_hover_text("Shuffle")
+                .clicked()
+            {
                 ctx.act(Action::Media(MediaCommand::SetShuffle { session: id.clone(), shuffle: !shuffle }));
             }
         });
@@ -113,7 +124,10 @@ fn controls(ui: &mut Ui, ctx: &mut UiCtx, session: &MediaSession) {
                 RepeatMode::List => "Repeat: all",
                 RepeatMode::Track => "Repeat: one",
             };
-            if icon_button(ui, &palette, icon, 40.0, ButtonKind::Ghost, repeat != RepeatMode::Off).on_hover_text(tip).clicked() {
+            if icon_button(ui, &palette, icon, 40.0, ButtonKind::Ghost, repeat != RepeatMode::Off)
+                .on_hover_text(tip)
+                .clicked()
+            {
                 ctx.act(Action::Media(MediaCommand::SetRepeat { session: id.clone(), repeat: repeat.next() }));
             }
         });

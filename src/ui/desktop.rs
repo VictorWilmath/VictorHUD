@@ -24,9 +24,14 @@ pub fn draw(ui: &mut Ui, ctx: &mut UiCtx, panel: &PanelInfo, view: Option<&Deskt
             }
         }
         let window_selected = matches!(target, CaptureTarget::Window(_));
-        let combo_text = if window_selected { target_label(&target, &state.monitors, &state.windows) } else { "Window…".into() };
+        let combo_text =
+            if window_selected { target_label(&target, &state.monitors, &state.windows) } else { "Window…".into() };
         let combo = egui::ComboBox::from_id_salt(("window-picker", id.0))
-            .selected_text(RichText::new(combo_text).color(if window_selected { palette.accent } else { palette.text_dim }))
+            .selected_text(RichText::new(combo_text).color(if window_selected {
+                palette.accent
+            } else {
+                palette.text_dim
+            }))
             .width(240.0)
             .height(420.0)
             .show_ui(ui, |ui| {
@@ -41,7 +46,10 @@ pub fn draw(ui: &mut Ui, ctx: &mut UiCtx, panel: &PanelInfo, view: Option<&Deskt
                     }
                 }
             });
-        if combo.response.clicked() {
+        let refresh = icon_button(ui, &palette, Icon::Refresh, 32.0, ButtonKind::Ghost, false)
+            .on_hover_text("Refresh the window list")
+            .clicked();
+        if combo.response.clicked() || refresh {
             ctx.act(Action::RefreshWindows);
         }
 
@@ -117,10 +125,11 @@ pub fn draw(ui: &mut Ui, ctx: &mut UiCtx, panel: &PanelInfo, view: Option<&Deskt
 }
 
 fn draw_cursor(painter: &egui::Painter, tip: Pos2, size: f32) {
-    let points: Vec<Pos2> = [(0.0, 0.0), (0.0, 1.0), (0.27, 0.77), (0.45, 1.1), (0.58, 1.04), (0.41, 0.72), (0.72, 0.72)]
-        .iter()
-        .map(|&(x, y)| tip + vec2(x * size, y * size))
-        .collect();
+    let points: Vec<Pos2> =
+        [(0.0, 0.0), (0.0, 1.0), (0.27, 0.77), (0.45, 1.1), (0.58, 1.04), (0.41, 0.72), (0.72, 0.72)]
+            .iter()
+            .map(|&(x, y)| tip + vec2(x * size, y * size))
+            .collect();
     painter.add(Shape::Path(egui::epaint::PathShape::closed_line(points.clone(), Stroke::new(1.5, Color32::BLACK))));
     let body = [points[0], points[1], points[6]];
     painter.add(Shape::convex_polygon(body.to_vec(), Color32::WHITE, Stroke::new(1.2, Color32::BLACK)));

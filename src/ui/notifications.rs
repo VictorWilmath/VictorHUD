@@ -18,10 +18,14 @@ pub fn draw(ui: &mut Ui, ctx: &mut UiCtx) {
         if widgets::toggle(ui, &palette, &mut dnd).changed() {
             ctx.act(Action::SetDoNotDisturb(dnd));
         }
+        widgets::icon(ui, Icon::Moon, 18.0, palette.text_dim);
         ui.label(RichText::new("Do not disturb").color(palette.text_dim));
         ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
             ui.add_enabled_ui(!center.history.is_empty(), |ui| {
-                if ui.button("Clear all").clicked() {
+                if widgets::icon_button(ui, &palette, Icon::Trash, 32.0, ButtonKind::Ghost, false)
+                    .on_hover_text("Clear all")
+                    .clicked()
+                {
                     ctx.act(Action::ClearNotifications);
                 }
             });
@@ -49,7 +53,11 @@ pub fn draw(ui: &mut Ui, ctx: &mut UiCtx) {
     ScrollArea::vertical().id_salt("inbox").auto_shrink([false, false]).show(ui, |ui| {
         for notification in &center.history {
             let frame = theme::card_frame(&palette).inner_margin(Margin::symmetric(12, 10));
-            let frame = if notification.read { frame } else { frame.stroke(Stroke::new(1.0, palette.accent.gamma_multiply(0.5))) };
+            let frame = if notification.read {
+                frame
+            } else {
+                frame.stroke(Stroke::new(1.0, palette.accent.gamma_multiply(0.5)))
+            };
             frame.show(ui, |ui| {
                 ui.set_width(ui.available_width());
                 ui.horizontal(|ui| {
@@ -66,7 +74,10 @@ pub fn draw(ui: &mut Ui, ctx: &mut UiCtx) {
                             ui.add(egui::Label::new(RichText::new(&notification.title).strong()).wrap());
                         }
                         if !notification.body.is_empty() {
-                            ui.add(egui::Label::new(RichText::new(&notification.body).size(14.0).color(palette.text_dim)).wrap());
+                            ui.add(
+                                egui::Label::new(RichText::new(&notification.body).size(14.0).color(palette.text_dim))
+                                    .wrap(),
+                            );
                         }
                     });
                     ui.with_layout(Layout::right_to_left(Align::Min), |ui| {
@@ -88,7 +99,9 @@ fn notification_icon(ui: &mut Ui, palette: &Palette, notification: &Notification
         Some(icon) => {
             let texture = widgets::artwork_texture(ui.ctx(), icon);
             let (rect, _) = ui.allocate_exact_size(egui::Vec2::splat(size), egui::Sense::hover());
-            egui::Image::from_texture(&texture).corner_radius(CornerRadius::same((size / 4.0) as u8)).paint_at(ui, rect);
+            egui::Image::from_texture(&texture)
+                .corner_radius(CornerRadius::same((size / 4.0) as u8))
+                .paint_at(ui, rect);
         }
         None => {
             let (rect, _) = ui.allocate_exact_size(egui::Vec2::splat(size), egui::Sense::hover());
@@ -115,7 +128,10 @@ pub fn draw_toast(ui: &mut Ui, palette: &Palette, notification: &Notification) {
                 let title = if notification.title.is_empty() { &notification.body } else { &notification.title };
                 ui.add(egui::Label::new(RichText::new(title).size(16.0).strong()).truncate());
                 if !notification.title.is_empty() && !notification.body.is_empty() {
-                    ui.add(egui::Label::new(RichText::new(&notification.body).size(13.5).color(palette.text_dim)).truncate());
+                    ui.add(
+                        egui::Label::new(RichText::new(&notification.body).size(13.5).color(palette.text_dim))
+                            .truncate(),
+                    );
                 }
             });
         });

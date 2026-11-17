@@ -230,7 +230,9 @@ fn friend_row(ui: &mut Ui, ctx: &mut UiCtx, friend: &crate::services::vrcx::Frie
                 };
                 ui.add(egui::Label::new(RichText::new(detail).size(12.5).color(palette.text_faint)).truncate());
                 if let Some(memo) = memo {
-                    ui.add(egui::Label::new(RichText::new(memo).size(12.0).italics().color(palette.text_faint)).truncate());
+                    ui.add(
+                        egui::Label::new(RichText::new(memo).size(12.0).italics().color(palette.text_faint)).truncate(),
+                    );
                 }
             });
             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
@@ -299,7 +301,10 @@ fn feed_tab(ui: &mut Ui, ctx: &mut UiCtx, panel: &PanelInfo) {
                         ui.label(RichText::new(entry.kind.label()).size(12.5).color(palette.text_faint));
                     });
                     if !entry.detail.is_empty() {
-                        ui.add(egui::Label::new(RichText::new(&entry.detail).size(13.0).color(palette.text_dim)).truncate());
+                        ui.add(
+                            egui::Label::new(RichText::new(&entry.detail).size(13.0).color(palette.text_dim))
+                                .truncate(),
+                        );
                     }
                 });
                 ui.with_layout(Layout::right_to_left(Align::Center), |ui| {

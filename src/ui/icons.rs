@@ -22,7 +22,6 @@ pub enum Icon {
     Unlock,
     Gear,
     Monitor,
-    Window,
     Users,
     Music,
     Bell,
@@ -37,7 +36,6 @@ pub enum Icon {
     Mute,
     ArrowLeft,
     ArrowRight,
-    Copy,
     Globe,
     Pointer,
     Refresh,
@@ -144,8 +142,9 @@ pub fn paint(painter: &Painter, rect: Rect, icon: Icon, color: Color32) {
             pen.dot(12.0, 8.5, 1.5);
         }
         Icon::Eye | Icon::EyeOff => {
-            let mut lens = pen.arc(12.0, 22.0, 13.0, -PI * 0.78, -PI * 0.22);
-            lens.extend(pen.arc(12.0, 2.0, 13.0, PI * 0.22, PI * 0.78));
+            // Two arcs that meet at (2.5, 12) and (21.5, 12).
+            let mut lens = pen.arc(12.0, 16.5, 10.5, -PI * 0.859, -PI * 0.141);
+            lens.extend(pen.arc(12.0, 7.5, 10.5, PI * 0.141, PI * 0.859));
             pen.closed(&lens);
             pen.circle(12.0, 12.0, 3.0);
             if icon == Icon::EyeOff {
@@ -186,12 +185,6 @@ pub fn paint(painter: &Painter, rect: Rect, icon: Icon, color: Color32) {
             pen.line(&[(12.0, 16.0), (12.0, 19.5)]);
             pen.line(&[(8.0, 20.0), (16.0, 20.0)]);
         }
-        Icon::Window => {
-            pen.rect(3.5, 4.5, 20.5, 19.5, 2.0);
-            pen.line(&[(3.5, 8.5), (20.5, 8.5)]);
-            pen.dot(6.0, 6.5, 0.8);
-            pen.dot(8.5, 6.5, 0.8);
-        }
         Icon::Users => {
             pen.circle(9.5, 8.5, 3.5);
             pen.line(&pen.arc(9.5, 20.5, 6.5, PI, TAU));
@@ -222,9 +215,9 @@ pub fn paint(painter: &Painter, rect: Rect, icon: Icon, color: Color32) {
             pen.line(&[(8.0, 15.0), (16.0, 15.0)]);
         }
         Icon::Moon => {
-            let mut shape = pen.arc(12.0, 12.0, 8.0, PI * 0.35, PI * 1.85);
-            let inner = pen.arc(15.5, 9.0, 6.5, PI * 1.52, PI * 0.62 - TAU);
-            shape.extend(inner);
+            // A disc with a bite taken out; the angles are where the two circles intersect.
+            let mut shape = pen.arc(12.0, 12.0, 8.5, 0.155, 4.557);
+            shape.extend(pen.arc(16.5, 7.5, 7.0, 3.732, 0.980));
             pen.closed(&shape);
         }
         Icon::Plus => {
@@ -265,10 +258,6 @@ pub fn paint(painter: &Painter, rect: Rect, icon: Icon, color: Color32) {
             pen.line(&[(5.0, 12.0), (18.5, 12.0)]);
             pen.arrow_head((19.0, 12.0), (1.0, 0.0), 5.0);
         }
-        Icon::Copy => {
-            pen.rect(8.5, 8.5, 19.5, 19.5, 2.0);
-            pen.line(&[(5.0, 15.5), (4.5, 15.5), (4.5, 4.5), (15.5, 4.5), (15.5, 5.0)]);
-        }
         Icon::Globe => {
             pen.circle(12.0, 12.0, 8.5);
             let mut meridian = pen.arc(12.0, 12.0, 8.5, -PI / 2.0, PI / 2.0);
@@ -281,7 +270,15 @@ pub fn paint(painter: &Painter, rect: Rect, icon: Icon, color: Color32) {
             pen.line(&[(3.5, 12.0), (20.5, 12.0)]);
         }
         Icon::Pointer => {
-            pen.closed(&[(6.0, 3.5), (18.0, 14.5), (12.5, 15.0), (15.5, 20.5), (13.0, 21.5), (10.0, 16.0), (6.0, 19.5)]);
+            pen.closed(&[
+                (6.0, 3.5),
+                (18.0, 14.5),
+                (12.5, 15.0),
+                (15.5, 20.5),
+                (13.0, 21.5),
+                (10.0, 16.0),
+                (6.0, 19.5),
+            ]);
         }
         Icon::Refresh => {
             pen.line(&pen.arc(12.0, 12.0, 7.5, -PI * 0.35, PI * 1.45));

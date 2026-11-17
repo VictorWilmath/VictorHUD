@@ -114,14 +114,14 @@ pub const DESKTOP_CHROME_HEIGHT: f32 = 134.0;
 pub fn panel_size(kind: PanelKind, desktop_aspect: Option<f32>) -> Vec2 {
     match kind {
         PanelKind::Watch => vec2(WATCH_WIDTH, 380.0),
-        PanelKind::Media => vec2(600.0, 440.0),
+        PanelKind::Media => vec2(600.0, 520.0),
         PanelKind::Desktop => {
             let aspect = desktop_aspect.unwrap_or(16.0 / 9.0).clamp(0.4, 4.0);
             let width = 960.0;
             vec2(width, (width - 32.0) / aspect + DESKTOP_CHROME_HEIGHT)
         }
         PanelKind::Vrcx => vec2(680.0, 580.0),
-        PanelKind::Notifications => vec2(500.0, 540.0),
+        PanelKind::Notifications => vec2(540.0, 560.0),
         PanelKind::Settings => vec2(780.0, 620.0),
     }
 }

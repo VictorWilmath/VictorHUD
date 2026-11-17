@@ -99,7 +99,7 @@ fn session_card(ui: &mut Ui, ctx: &mut UiCtx) {
     theme::card_frame(&palette).show(ui, |ui| {
         ui.set_width(ui.available_width());
         ui.horizontal(|ui| {
-            widgets::status_dot(ui, if in_game { palette.good } else { palette.accent });
+            widgets::icon(ui, Icon::Clock, 26.0, if in_game { palette.good } else { palette.accent });
             ui.vertical(|ui| {
                 ui.spacing_mut().item_spacing.y = 0.0;
                 ui.label(RichText::new(&label).size(16.0).strong());
@@ -184,7 +184,9 @@ fn now_playing(ui: &mut Ui, ctx: &mut UiCtx, session: &MediaSession) {
                     let response = ui
                         .add(
                             egui::Button::new(
-                                RichText::new(format!("{}/{}", index + 1, sessions.len())).size(12.0).color(palette.text_dim),
+                                RichText::new(format!("{}/{}", index + 1, sessions.len()))
+                                    .size(12.0)
+                                    .color(palette.text_dim),
                             )
                             .corner_radius(10)
                             .min_size(vec2(36.0, 22.0)),
@@ -209,8 +211,20 @@ fn now_playing(ui: &mut Ui, ctx: &mut UiCtx, session: &MediaSession) {
         let position = session.live_position(ctx.instant).unwrap_or_default();
         let (rect, _) = ui.allocate_exact_size(vec2(ui.available_width(), 12.0), Sense::hover());
         let font = FontId::proportional(12.0);
-        ui.painter().text(rect.left_center(), Align2::LEFT_CENTER, format_duration(position), font.clone(), palette.text_faint);
-        ui.painter().text(rect.right_center(), Align2::RIGHT_CENTER, format_duration(duration), font, palette.text_faint);
+        ui.painter().text(
+            rect.left_center(),
+            Align2::LEFT_CENTER,
+            format_duration(position),
+            font.clone(),
+            palette.text_faint,
+        );
+        ui.painter().text(
+            rect.right_center(),
+            Align2::RIGHT_CENTER,
+            format_duration(duration),
+            font,
+            palette.text_faint,
+        );
     }
 
     let playing = session.status == PlaybackStatus::Playing;
