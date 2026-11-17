@@ -1,0 +1,85 @@
+[package]
+name = "victorhud"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.88"
+description = "A pure-Rust SteamVR wrist overlay: watch menu, media controls, interactive desktops and VRCX integration."
+authors = ["VictorWilmath <victorwilmath5728@gmail.com>"]
+repository = "https://github.com/VictorWilmath/VictorHUD"
+publish = false
+
+[[bin]]
+name = "VictorHUD"
+path = "src/main.rs"
+
+[features]
+default = ["preview"]
+# Desktop preview window that renders every panel with mock data (no headset needed).
+preview = ["dep:eframe"]
+
+[dependencies]
+anyhow = "1"
+base64 = "0.23"
+chrono = "0.4"
+crossbeam-channel = "0.5"
+directories = "6"
+egui = "0.37"
+env_logger = "0.11"
+glam = { version = "0.34", features = ["serde"] }
+image = { version = "0.25", default-features = false, features = ["png", "jpeg", "bmp", "webp"] }
+log = "0.4"
+rusqlite = { version = "0.43", features = ["bundled"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+toml = "1"
+tungstenite = "0.30"
+
+eframe = { version = "0.37", optional = true }
+
+[target.'cfg(windows)'.dependencies]
+libloading = "0.9"
+windows = { version = "0.62", features = [
+    "Foundation",
+    "Foundation_Collections",
+    "Graphics_Capture",
+    "Graphics_DirectX",
+    "Graphics_DirectX_Direct3D11",
+    "Media_Control",
+    "Storage_Streams",
+    "ApplicationModel",
+    "Win32_Foundation",
+    "Win32_Graphics_Direct3D",
+    "Win32_Graphics_Direct3D11",
+    "Win32_Graphics_Direct3D_Fxc",
+    "Win32_Graphics_Dxgi",
+    "Win32_Graphics_Dxgi_Common",
+    "Win32_Graphics_Dwm",
+    "Win32_Graphics_Gdi",
+    "Win32_Media_Audio",
+    "Win32_Media_Audio_Endpoints",
+    "Win32_System_Com",
+    "Win32_System_Console",
+    "Win32_System_DataExchange",
+    "Win32_System_Memory",
+    "Win32_System_Ole",
+    "Win32_System_ProcessStatus",
+    "Win32_System_Threading",
+    "Win32_System_WinRT",
+    "Win32_System_WinRT_Direct3D11",
+    "Win32_System_WinRT_Graphics_Capture",
+    "Win32_UI_HiDpi",
+    "Win32_UI_Input_KeyboardAndMouse",
+    "Win32_UI_Shell",
+    "Win32_UI_WindowsAndMessaging",
+] }
+
+[dev-dependencies]
+tempfile = "3"
+
+[profile.release]
+lto = "thin"
+codegen-units = 4
+strip = true
+
+[profile.dev.package."*"]
+opt-level = 2
