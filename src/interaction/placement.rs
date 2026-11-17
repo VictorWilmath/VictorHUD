@@ -27,11 +27,6 @@ impl Pose {
         Self { rotation: rotation.normalize(), translation }
     }
 
-    pub fn from_affine(affine: Affine3A) -> Self {
-        let (_, rotation, translation) = affine.to_scale_rotation_translation();
-        Self::new(rotation, translation)
-    }
-
     pub fn to_affine(self) -> Affine3A {
         Affine3A::from_rotation_translation(self.rotation, self.translation)
     }
@@ -70,14 +65,11 @@ impl Pose {
         self.translation + self.rotation * point
     }
 
-    pub fn transform_vector(self, vector: Vec3) -> Vec3 {
-        self.rotation * vector
-    }
-
     pub fn forward(self) -> Vec3 {
         self.rotation * Vec3::NEG_Z
     }
 
+    #[cfg(test)]
     pub fn up(self) -> Vec3 {
         self.rotation * Vec3::Y
     }
@@ -139,6 +131,12 @@ pub struct QuadHit {
 
 /// Intersects a ray with a flat overlay quad. Only hits on the visible side count.
 pub fn ray_quad_hit(origin: Vec3, direction: Vec3, quad: Pose, width: f32, height: f32) -> Option<QuadHit> {
+    let hit = ray_plane_hit(origin, direction, quad, width, height)?;
+    ((0.0..=1.0).contains(&hit.uv.x) && (0.0..=1.0).contains(&hit.uv.y)).then_some(hit)
+}
+
+/// Like [`ray_quad_hit`] but on the quad's whole plane, so a drag keeps tracking past the edge.
+pub fn ray_plane_hit(origin: Vec3, direction: Vec3, quad: Pose, width: f32, height: f32) -> Option<QuadHit> {
     let direction = direction.normalize_or_zero();
     let normal = quad.normal();
     let denom = direction.dot(normal);
@@ -151,12 +149,8 @@ pub fn ray_quad_hit(origin: Vec3, direction: Vec3, quad: Pose, width: f32, heigh
     }
     let point = origin + direction * distance;
     let local = quad.inverse().transform_point(point);
-    let u = local.x / width + 0.5;
-    let v = 0.5 - local.y / height;
-    if !(0.0..=1.0).contains(&u) || !(0.0..=1.0).contains(&v) {
-        return None;
-    }
-    Some(QuadHit { distance, point, uv: Vec2::new(u, v) })
+    let uv = Vec2::new(local.x / width + 0.5, 0.5 - local.y / height);
+    Some(QuadHit { distance, point, uv })
 }
 
 #[cfg(test)]

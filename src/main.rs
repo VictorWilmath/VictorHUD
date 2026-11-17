@@ -6,14 +6,16 @@
 //! inbox and settings. Any panel can be pinned in the world, pinned to your view, or attached to
 //! your wrist.
 //!
-//! # Status
+//! # Layout
 //!
-//! Done: every panel's UI, settings and their persistence, the watch-raise gesture and laser
-//! math, VRChat log parsing, the read-only VRCX reader, and the XSOverlay-compatible notification
-//! receiver. In progress: the SteamVR host (OpenVR loader, Direct3D 11 rendering, controller
-//! input), Windows media controls and desktop capture. `src/vr/sys.rs` already holds the OpenVR
-//! bindings the host will use; OpenVR gets loaded from the installed SteamVR at runtime, so no
-//! C++ SDK, CMake or `openvr_api.dll` is needed.
+//! - `ui`: every panel, drawn with egui. The same code runs in VR and in the `--preview` window.
+//! - `hud`, `state`, `config`: shared state, actions and persisted settings.
+//! - `interaction`: the watch-raise gesture, laser hit testing, placement and scrolling math.
+//! - `services`: background data (media, VRChat logs, VRCX, the notification receiver).
+//! - `vr`: OpenVR, loaded from the installed SteamVR at runtime, so no C++ SDK, CMake or
+//!   `openvr_api.dll` is needed. `vr/sys.rs` holds the generated bindings.
+//! - `win`: the SteamVR host loop, Direct3D 11 rendering, desktop capture, synthetic input and
+//!   Windows media/volume control.
 //!
 //! # Building
 //!
@@ -42,6 +44,8 @@
 //! Settings (`config.toml`) and the log (`VictorHUD.log`) live in `%APPDATA%\VictorHUD\config`.
 
 #![cfg_attr(all(windows, not(debug_assertions)), windows_subsystem = "windows")]
+// Off Windows only the preview builds, so the VR-only helpers go unused there.
+#![cfg_attr(not(windows), allow(dead_code))]
 
 mod config;
 mod hud;
@@ -52,6 +56,10 @@ mod services;
 mod state;
 mod ui;
 mod util;
+#[cfg(windows)]
+mod vr;
+#[cfg(windows)]
+mod win;
 
 use std::io::Write;
 
@@ -144,6 +152,8 @@ fn run(args: &Args) -> anyhow::Result<()> {
     if args.preview {
         #[cfg(feature = "preview")]
         {
+            #[cfg(windows)]
+            win::init_process();
             let mode = if args.live { services::DataMode::Live } else { services::DataMode::Demo };
             return preview::run(mode);
         }
@@ -152,8 +162,10 @@ fn run(args: &Args) -> anyhow::Result<()> {
     }
     #[cfg(windows)]
     {
-        let _ = (args.install, args.uninstall);
-        anyhow::bail!("the SteamVR overlay host isn't finished yet; run with --preview to see the panels")
+        if args.install || args.uninstall {
+            return win::install(args.install);
+        }
+        win::run()
     }
     #[cfg(not(windows))]
     {

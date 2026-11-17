@@ -49,11 +49,16 @@ impl Services {
 
         match mode {
             DataMode::Live => {
-                drop(media_rx);
-                let _ = events_tx.send(ServiceEvent::Media(MediaSnapshot {
-                    error: Some("System media controls aren't connected yet".into()),
-                    ..Default::default()
-                }));
+                #[cfg(windows)]
+                crate::win::media::spawn(media_rx, events_tx.clone(), shutdown.clone());
+                #[cfg(not(windows))]
+                {
+                    drop(media_rx);
+                    let _ = events_tx.send(ServiceEvent::Media(MediaSnapshot {
+                        error: Some("Media controls need Windows".into()),
+                        ..Default::default()
+                    }));
+                }
 
                 if let Some(dir) = config.vrcx.resolved_log_dir() {
                     vrchat_log::spawn(dir, events_tx.clone(), shutdown.clone());
@@ -69,11 +74,7 @@ impl Services {
             }
             DataMode::Demo => {
                 spawn_mock_media(media_rx, events_tx.clone(), shutdown.clone());
-                let mut parser = vrchat_log::LogParser::default();
-                for line in vrchat_log::demo_log().lines() {
-                    parser.feed_line(line);
-                }
-                let _ = events_tx.send(ServiceEvent::Vrchat(parser.state));
+                let _ = events_tx.send(ServiceEvent::Vrchat(vrchat_log::demo_state()));
                 let demo_db = std::env::temp_dir().join("victorhud-demo-vrcx.sqlite3");
                 match vrcx::write_demo_database(&demo_db) {
                     Ok(()) => vrcx::spawn(demo_db, events_tx.clone(), shutdown.clone()),

@@ -61,10 +61,8 @@ pub fn target_label(target: &CaptureTarget, monitors: &[MonitorInfo], windows: &
             .find(|m| m.index == *index)
             .map(|m| m.label.clone())
             .unwrap_or_else(|| format!("Display {}", index + 1)),
-        CaptureTarget::Window(hwnd) => windows
-            .iter()
-            .find(|w| w.hwnd == *hwnd)
-            .map(|w| w.title.clone())
-            .unwrap_or_else(|| "Window".into()),
+        CaptureTarget::Window(hwnd) => {
+            windows.iter().find(|w| w.hwnd == *hwnd).map(|w| w.title.clone()).unwrap_or_else(|| "Window".into())
+        }
     }
 }

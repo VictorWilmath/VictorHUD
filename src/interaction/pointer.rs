@@ -58,7 +58,7 @@ impl ScrollAccumulator {
         let sign = if invert { -1.0 } else { 1.0 };
         let points_per_notch = 40.0;
         Vec2::new(
-            shape_stick(stick.x) * notches_per_second * dt * points_per_notch * -1.0,
+            -(shape_stick(stick.x) * notches_per_second * dt * points_per_notch),
             shape_stick(stick.y) * notches_per_second * dt * points_per_notch * sign,
         )
     }

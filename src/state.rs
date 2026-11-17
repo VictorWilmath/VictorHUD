@@ -19,13 +19,6 @@ pub enum Hand {
 }
 
 impl Hand {
-    pub fn other(self) -> Hand {
-        match self {
-            Hand::Left => Hand::Right,
-            Hand::Right => Hand::Left,
-        }
-    }
-
     pub fn label(self) -> &'static str {
         match self {
             Hand::Left => "Left",
@@ -150,10 +143,7 @@ impl SessionInfo {
     pub fn display(&self, now: SystemTime) -> (String, Option<Duration>) {
         match (&self.app_name, self.app_started) {
             (Some(name), started) => (name.clone(), started.and_then(|t| now.duration_since(t).ok())),
-            (None, _) => (
-                "SteamVR".to_string(),
-                self.steamvr_started.and_then(|t| now.duration_since(t).ok()),
-            ),
+            (None, _) => ("SteamVR".to_string(), self.steamvr_started.and_then(|t| now.duration_since(t).ok())),
         }
     }
 }

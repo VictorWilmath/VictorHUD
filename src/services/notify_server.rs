@@ -42,11 +42,7 @@ pub fn parse_websocket_message(text: &str, client: &str, default_timeout: f32) -
         Some(object @ Value::Object(_)) => object.clone(),
         _ => return None,
     };
-    let sender = value
-        .get("sender")
-        .and_then(Value::as_str)
-        .filter(|s| !s.is_empty())
-        .unwrap_or(client);
+    let sender = value.get("sender").and_then(Value::as_str).filter(|s| !s.is_empty()).unwrap_or(client);
     Some(notification_from_object(&payload, default_timeout, sender))
 }
 
@@ -84,17 +80,29 @@ fn decode_icon(icon: &str, prefer_base64: bool) -> Option<Arc<Artwork>> {
     }
     let from_base64 = || {
         let data = icon.split_once("base64,").map(|(_, d)| d).unwrap_or(icon);
-        base64::engine::general_purpose::STANDARD.decode(data).ok().and_then(|bytes| Artwork::decode(&bytes, MAX_ICON_SIDE))
+        base64::engine::general_purpose::STANDARD
+            .decode(data)
+            .ok()
+            .and_then(|bytes| Artwork::decode(&bytes, MAX_ICON_SIDE))
     };
     let from_file = || {
         let path = Path::new(icon);
-        path.is_file().then(|| std::fs::read(path).ok()).flatten().and_then(|bytes| Artwork::decode(&bytes, MAX_ICON_SIDE))
+        path.is_file()
+            .then(|| std::fs::read(path).ok())
+            .flatten()
+            .and_then(|bytes| Artwork::decode(&bytes, MAX_ICON_SIDE))
     };
     if prefer_base64 { from_base64().or_else(from_file) } else { from_file().or_else(from_base64) }
 }
 
 /// Starts the UDP and WebSocket listeners. Port conflicts are reported as warnings, not errors.
-pub fn spawn(udp_port: u16, websocket_port: u16, default_timeout: f32, events: Sender<ServiceEvent>, shutdown: Arc<AtomicBool>) {
+pub fn spawn(
+    udp_port: u16,
+    websocket_port: u16,
+    default_timeout: f32,
+    events: Sender<ServiceEvent>,
+    shutdown: Arc<AtomicBool>,
+) {
     match UdpSocket::bind(("127.0.0.1", udp_port)) {
         Ok(socket) => {
             let events = events.clone();
@@ -168,9 +176,16 @@ fn run_websocket(listener: TcpListener, default_timeout: f32, events: Sender<Ser
     }
 }
 
-fn handle_websocket_client(stream: TcpStream, default_timeout: f32, events: Sender<ServiceEvent>, shutdown: Arc<AtomicBool>) {
+fn handle_websocket_client(
+    stream: TcpStream,
+    default_timeout: f32,
+    events: Sender<ServiceEvent>,
+    shutdown: Arc<AtomicBool>,
+) {
     let _ = stream.set_nonblocking(false);
     let mut client = String::from("App");
+    // The error type is fixed by tungstenite's handshake callback signature.
+    #[allow(clippy::result_large_err)]
     let callback = |request: &tungstenite::handshake::server::Request, response| {
         if let Some(query) = request.uri().query() {
             for pair in query.split('&') {
@@ -208,7 +223,8 @@ fn handle_websocket_client(stream: TcpStream, default_timeout: f32, events: Send
 mod tests {
     use super::*;
 
-    const ONE_PIXEL_PNG: &str = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
+    const ONE_PIXEL_PNG: &str =
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
 
     #[test]
     fn parses_vrcx_style_udp_notifications() {

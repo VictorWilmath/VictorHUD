@@ -4,11 +4,7 @@ use std::time::Duration;
 pub fn format_duration(duration: Duration) -> String {
     let total = duration.as_secs();
     let (hours, minutes, seconds) = (total / 3600, (total / 60) % 60, total % 60);
-    if hours > 0 {
-        format!("{hours}:{minutes:02}:{seconds:02}")
-    } else {
-        format!("{minutes}:{seconds:02}")
-    }
+    if hours > 0 { format!("{hours}:{minutes:02}:{seconds:02}") } else { format!("{minutes}:{seconds:02}") }
 }
 
 /// `2h 14m`, `14m`, or `just now`, for "how long ago" labels.
@@ -27,22 +23,25 @@ pub fn strip_rich_text(text: &str) -> String {
     let mut out = String::with_capacity(text.len());
     let mut chars = text.char_indices().peekable();
     while let Some((i, c)) = chars.next() {
-        if c == '<' {
-            if let Some(end) = text[i..].find('>') {
-                let tag = &text[i + 1..i + end];
-                let name = tag.trim_start_matches('/').split(['=', ' ']).next().unwrap_or("");
-                if matches!(name.to_ascii_lowercase().as_str(), "b" | "i" | "u" | "s" | "color" | "size" | "br" | "material" | "quad" | "mark") {
-                    if name.eq_ignore_ascii_case("br") {
-                        out.push('\n');
-                    }
-                    while let Some(&(j, _)) = chars.peek() {
-                        if j > i + end {
-                            break;
-                        }
-                        chars.next();
-                    }
-                    continue;
+        if c == '<'
+            && let Some(end) = text[i..].find('>')
+        {
+            let tag = &text[i + 1..i + end];
+            let name = tag.trim_start_matches('/').split(['=', ' ']).next().unwrap_or("");
+            if matches!(
+                name.to_ascii_lowercase().as_str(),
+                "b" | "i" | "u" | "s" | "color" | "size" | "br" | "material" | "quad" | "mark"
+            ) {
+                if name.eq_ignore_ascii_case("br") {
+                    out.push('\n');
                 }
+                while let Some(&(j, _)) = chars.peek() {
+                    if j > i + end {
+                        break;
+                    }
+                    chars.next();
+                }
+                continue;
             }
         }
         out.push(c);
@@ -57,14 +56,18 @@ pub fn open_url(url: &str) {
         return;
     }
     #[cfg(windows)]
-    let result = std::process::Command::new("explorer").arg(url).spawn();
-    #[cfg(target_os = "macos")]
-    let result = std::process::Command::new("open").arg(url).spawn();
-    #[cfg(all(unix, not(target_os = "macos")))]
-    let result = std::process::Command::new("xdg-open").arg(url).spawn();
-    if let Err(err) = result {
-        log::warn!("could not open {url}: {err}");
+    {
+        use windows::Win32::UI::Shell::ShellExecuteW;
+        use windows::Win32::UI::WindowsAndMessaging::SW_SHOWNORMAL;
+        use windows::core::{HSTRING, w};
+        let result = unsafe { ShellExecuteW(None, w!("open"), &HSTRING::from(url), None, None, SW_SHOWNORMAL) };
+        // ShellExecuteW reports success with a value above 32.
+        if result.0 as usize <= 32 {
+            log::warn!("could not open {url} (ShellExecute returned {})", result.0 as usize);
+        }
     }
+    #[cfg(not(windows))]
+    log::info!("would open {url} (only supported on Windows)");
 }
 
 /// Title-cases an executable-style name: `spotify.exe` -> `Spotify`.

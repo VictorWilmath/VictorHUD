@@ -86,10 +86,6 @@ impl Hud {
         }
     }
 
-    pub fn has_pending_toasts(&self) -> bool {
-        !self.toasts.is_empty()
-    }
-
     /// Handles actions that work the same everywhere. Anything host specific is handed back.
     pub fn handle(&mut self, action: Action) -> Option<Action> {
         match action {

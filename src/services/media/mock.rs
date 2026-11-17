@@ -15,9 +15,27 @@ struct Track {
 }
 
 const SPOTIFY_TRACKS: &[Track] = &[
-    Track { title: "Midnight City", artist: "M83", album: "Hurry Up, We're Dreaming", length: 243, colors: ([255, 94, 98], [72, 52, 212]) },
-    Track { title: "Instant Crush", artist: "Daft Punk, Julian Casablancas", album: "Random Access Memories", length: 337, colors: ([20, 20, 30], [212, 175, 55]) },
-    Track { title: "Resonance", artist: "HOME", album: "Odyssey", length: 212, colors: ([255, 120, 200], [40, 200, 255]) },
+    Track {
+        title: "Midnight City",
+        artist: "M83",
+        album: "Hurry Up, We're Dreaming",
+        length: 243,
+        colors: ([255, 94, 98], [72, 52, 212]),
+    },
+    Track {
+        title: "Instant Crush",
+        artist: "Daft Punk, Julian Casablancas",
+        album: "Random Access Memories",
+        length: 337,
+        colors: ([20, 20, 30], [212, 175, 55]),
+    },
+    Track {
+        title: "Resonance",
+        artist: "HOME",
+        album: "Odyssey",
+        length: 212,
+        colors: ([255, 120, 200], [40, 200, 255]),
+    },
 ];
 
 pub struct MockMedia {
@@ -52,7 +70,11 @@ impl MockMedia {
             master_volume: 0.62,
             muted: false,
             spotify_volume: 0.8,
-            artworks: SPOTIFY_TRACKS.iter().enumerate().map(|(i, t)| gradient_artwork(i as u64 + 1, t.colors.0, t.colors.1)).collect(),
+            artworks: SPOTIFY_TRACKS
+                .iter()
+                .enumerate()
+                .map(|(i, t)| gradient_artwork(i as u64 + 1, t.colors.0, t.colors.1))
+                .collect(),
             video_position: Duration::from_secs(412),
         }
     }

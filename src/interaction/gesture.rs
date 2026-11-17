@@ -1,6 +1,7 @@
 //! "Check your watch" detection: the watch shows when the back of the wrist faces your eyes,
 //! is roughly where you're looking, and is within reach.
 
+#[cfg(test)]
 use glam::Vec3;
 
 use super::placement::Pose;
@@ -60,17 +61,19 @@ impl WatchGesture {
         self.shown
     }
 
-    pub fn alpha(&self) -> f32 {
-        self.alpha
-    }
-
     /// Advances the state machine by `dt` seconds. `raised` is the raw per-frame condition and
     /// `forced` keeps the watch up regardless (e.g. "keep on wrist" or while it's being grabbed).
     pub fn update(&mut self, raised: bool, forced: bool, dt: f32, show_delay: f32, hide_delay: f32) -> f32 {
         let want_change = if forced { !self.shown } else { raised != self.shown };
         if want_change {
             self.condition_time += dt;
-            let delay = if forced { 0.0 } else if self.shown { hide_delay } else { show_delay };
+            let delay = if forced {
+                0.0
+            } else if self.shown {
+                hide_delay
+            } else {
+                show_delay
+            };
             if self.condition_time >= delay {
                 self.shown = !self.shown;
                 self.condition_time = 0.0;
@@ -90,12 +93,14 @@ impl WatchGesture {
     }
 }
 
+#[cfg(test)]
 /// World pose of the watch given the wrist hand's pointer pose and the configured offset.
 pub fn watch_world_pose(tip: Pose, offset: Pose) -> Pose {
     tip.mul(offset)
 }
 
-/// Head pose looking from `eye` at `target` (used by tests and the preview simulator).
+#[cfg(test)]
+/// Head pose looking from `eye` at `target`.
 pub fn head_looking_at(eye: Vec3, target: Vec3) -> Pose {
     // A head looks down -Z, so its +Z faces away from the target.
     Pose::facing(eye, eye + (eye - target))
@@ -192,10 +197,11 @@ mod tests {
             gesture.update(true, false, 0.05, 0.12, 0.35);
         }
         assert!(gesture.shown());
+        let mut alpha = 0.0;
         for _ in 0..5 {
-            gesture.update(true, false, 0.05, 0.12, 0.35);
+            alpha = gesture.update(true, false, 0.05, 0.12, 0.35);
         }
-        assert_eq!(gesture.alpha(), 1.0);
+        assert_eq!(alpha, 1.0);
 
         // Short dips below the threshold are ignored.
         gesture.update(false, false, 0.2, 0.12, 0.35);
@@ -203,9 +209,9 @@ mod tests {
         gesture.update(false, false, 0.2, 0.12, 0.35);
         assert!(!gesture.shown());
         for _ in 0..10 {
-            gesture.update(false, false, 0.05, 0.12, 0.35);
+            alpha = gesture.update(false, false, 0.05, 0.12, 0.35);
         }
-        assert_eq!(gesture.alpha(), 0.0);
+        assert_eq!(alpha, 0.0);
     }
 
     #[test]

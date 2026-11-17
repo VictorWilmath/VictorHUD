@@ -142,10 +142,8 @@ fn detect_prefix(conn: &Connection, tables: &HashSet<String>) -> Option<String> 
     let mut best: Option<(String, String)> = None;
     for table in tables.iter().filter(|t| t.ends_with("_feed_gps") && t.starts_with("usr")) {
         let prefix = table.trim_end_matches("_feed_gps").to_string();
-        let newest: Option<String> = conn
-            .query_row(&format!("SELECT MAX(created_at) FROM \"{table}\""), [], |row| row.get(0))
-            .ok()
-            .flatten();
+        let newest: Option<String> =
+            conn.query_row(&format!("SELECT MAX(created_at) FROM \"{table}\""), [], |row| row.get(0)).ok().flatten();
         let newest = newest.unwrap_or_default();
         if best.as_ref().is_none_or(|(_, b)| newest > *b) {
             best = Some((prefix, newest));
@@ -273,10 +271,11 @@ fn read_friends(conn: &Connection, tables: &HashSet<String>, prefix: &str) -> ru
     let mut presence: HashMap<String, (String, Option<DateTime<Local>>)> = HashMap::new();
     let online_offline = format!("{prefix}_feed_online_offline");
     if tables.contains(&online_offline) {
-        let mut stmt = conn.prepare(&format!(
-            "SELECT user_id, type, MAX(created_at) FROM \"{online_offline}\" GROUP BY user_id"
-        ))?;
-        for row in stmt.query_map([], |row| Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?, row.get::<_, String>(2)?)))? {
+        let mut stmt =
+            conn.prepare(&format!("SELECT user_id, type, MAX(created_at) FROM \"{online_offline}\" GROUP BY user_id"))?;
+        for row in stmt
+            .query_map([], |row| Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?, row.get::<_, String>(2)?)))?
+        {
             let (user, kind, at) = row?;
             presence.insert(user, (kind, parse_time(&at)));
         }
@@ -392,7 +391,9 @@ pub fn write_demo_database(path: &Path) -> rusqlite::Result<()> {
     ))?;
 
     let now = chrono::Utc::now();
-    let at = |minutes_ago: i64| (now - chrono::Duration::minutes(minutes_ago)).to_rfc3339_opts(chrono::SecondsFormat::Millis, true);
+    let at = |minutes_ago: i64| {
+        (now - chrono::Duration::minutes(minutes_ago)).to_rfc3339_opts(chrono::SecondsFormat::Millis, true)
+    };
     let friends = [
         ("usr_aa000000-0000-4000-8000-000000000002", "Kazuha", "Trusted User"),
         ("usr_aa000000-0000-4000-8000-000000000003", "Moonbeam", "Known User"),
@@ -418,10 +419,34 @@ pub fn write_demo_database(path: &Path) -> rusqlite::Result<()> {
         )?;
     }
     let gps = [
-        (70, friends[0].0, "Kazuha", "wrld_4432ea9b-729c-46e3-8eaf-846aa0a37fdd:48213~hidden(usr_x)~region(use)", "The Black Cat"),
-        (52, friends[1].0, "Moonbeam", "wrld_4432ea9b-729c-46e3-8eaf-846aa0a37fdd:48213~hidden(usr_x)~region(use)", "The Black Cat"),
-        (35, friends[2].0, "Pixel Fox", "wrld_4432ea9b-729c-46e3-8eaf-846aa0a37fdd:48213~hidden(usr_x)~region(use)", "The Black Cat"),
-        (9, friends[1].0, "Moonbeam", "wrld_b2d24c29-1ded-4990-a90d-dd6dcc440300:771~friends(usr_y)~region(eu)", "Midnight Rooftop"),
+        (
+            70,
+            friends[0].0,
+            "Kazuha",
+            "wrld_4432ea9b-729c-46e3-8eaf-846aa0a37fdd:48213~hidden(usr_x)~region(use)",
+            "The Black Cat",
+        ),
+        (
+            52,
+            friends[1].0,
+            "Moonbeam",
+            "wrld_4432ea9b-729c-46e3-8eaf-846aa0a37fdd:48213~hidden(usr_x)~region(use)",
+            "The Black Cat",
+        ),
+        (
+            35,
+            friends[2].0,
+            "Pixel Fox",
+            "wrld_4432ea9b-729c-46e3-8eaf-846aa0a37fdd:48213~hidden(usr_x)~region(use)",
+            "The Black Cat",
+        ),
+        (
+            9,
+            friends[1].0,
+            "Moonbeam",
+            "wrld_b2d24c29-1ded-4990-a90d-dd6dcc440300:771~friends(usr_y)~region(eu)",
+            "Midnight Rooftop",
+        ),
         (4, friends[5].0, "Juniper", "private", ""),
     ];
     for (ago, id, name, location, world) in gps {

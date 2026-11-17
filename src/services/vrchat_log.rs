@@ -104,7 +104,11 @@ impl InstanceInfo {
 
     /// Link that opens this instance on the VRChat website (works for joinable instances).
     pub fn launch_url(&self) -> String {
-        format!("https://vrchat.com/home/launch?worldId={}&instanceId={}", self.world_id, self.location.split_once(':').map(|(_, i)| i).unwrap_or(""))
+        format!(
+            "https://vrchat.com/home/launch?worldId={}&instanceId={}",
+            self.world_id,
+            self.location.split_once(':').map(|(_, i)| i).unwrap_or("")
+        )
     }
 
     pub fn world_url(&self) -> String {
@@ -164,19 +168,17 @@ impl LogParser {
             self.state.local_user = Some(name);
             return true;
         }
-        if let Some(location) = message.strip_prefix("Joining ") {
-            if location.starts_with("wrld_") {
-                if let Some(instance) = InstanceInfo::from_location(location, timestamp) {
-                    self.state.instance = Some(instance);
-                    self.state.players.clear();
-                    self.state.last_activity = Some(timestamp);
-                    return true;
-                }
-            }
+        if let Some(location) = message.strip_prefix("Joining ")
+            && location.starts_with("wrld_")
+            && let Some(instance) = InstanceInfo::from_location(location, timestamp)
+        {
+            self.state.instance = Some(instance);
+            self.state.players.clear();
+            self.state.last_activity = Some(timestamp);
+            return true;
         }
-        let room_name = message
-            .strip_prefix("Joining or Creating Room:")
-            .or_else(|| message.strip_prefix("Entering Room:"));
+        let room_name =
+            message.strip_prefix("Joining or Creating Room:").or_else(|| message.strip_prefix("Entering Room:"));
         if let Some(name) = room_name {
             if let Some(instance) = &mut self.state.instance {
                 instance.world_name = Some(name.trim().to_string());
@@ -236,11 +238,11 @@ fn split_line(line: &str) -> Option<(DateTime<Local>, &str)> {
 
 /// `Name (usr_123)` -> (`Name`, Some(`usr_123`)); `Name` -> (`Name`, None).
 fn split_name_and_id(text: &str) -> (String, Option<String>) {
-    if let Some(open) = text.rfind(" (usr_") {
-        if text.ends_with(')') {
-            let id = &text[open + 2..text.len() - 1];
-            return (text[..open].trim().to_string(), Some(id.to_string()));
-        }
+    if let Some(open) = text.rfind(" (usr_")
+        && text.ends_with(')')
+    {
+        let id = &text[open + 2..text.len() - 1];
+        return (text[..open].trim().to_string(), Some(id.to_string()));
     }
     (text.trim().to_string(), None)
 }
@@ -270,16 +272,16 @@ pub fn spawn(dir: PathBuf, events: Sender<ServiceEvent>, shutdown: Arc<AtomicBoo
             let mut offset = 0u64;
             let mut pending = Vec::new();
             while !shutdown.load(Ordering::Relaxed) {
-                if let Some(newest) = newest_log_file(&dir) {
-                    if current.as_ref() != Some(&newest) {
-                        log::info!("following VRChat log {}", newest.display());
-                        parser = LogParser::default();
-                        parser.state.log_file = Some(newest.clone());
-                        offset = 0;
-                        pending.clear();
-                        current = Some(newest);
-                        let _ = events.send(ServiceEvent::Vrchat(parser.state.clone()));
-                    }
+                if let Some(newest) = newest_log_file(&dir)
+                    && current.as_ref() != Some(&newest)
+                {
+                    log::info!("following VRChat log {}", newest.display());
+                    parser = LogParser::default();
+                    parser.state.log_file = Some(newest.clone());
+                    offset = 0;
+                    pending.clear();
+                    current = Some(newest);
+                    let _ = events.send(ServiceEvent::Vrchat(parser.state.clone()));
                 }
                 if let Some(path) = &current {
                     match read_new_bytes(path, &mut offset) {
@@ -329,6 +331,25 @@ pub fn demo_log() -> &'static str {
 2026.11.16 21:52:44 Log        -  [Behaviour] OnPlayerJoined Pixel Fox (usr_aa000000-0000-4000-8000-000000000004)\n\
 2026.11.16 22:05:13 Log        -  [Behaviour] OnPlayerJoined Ren (usr_aa000000-0000-4000-8000-000000000005)\n\
 2026.11.16 22:31:50 Log        -  [Behaviour] OnPlayerLeft Moonbeam (usr_aa000000-0000-4000-8000-000000000003)\n"
+}
+
+/// The parsed demo log, moved in time so its last line happened a few minutes ago.
+pub fn demo_state() -> VrchatState {
+    let mut parser = LogParser::default();
+    for line in demo_log().lines() {
+        parser.feed_line(line);
+    }
+    let mut state = parser.state;
+    let Some(last) = state.last_activity else { return state };
+    let shift = Local::now() - chrono::TimeDelta::minutes(4) - last;
+    if let Some(instance) = &mut state.instance {
+        instance.joined_at += shift;
+    }
+    for player in &mut state.players {
+        player.joined_at += shift;
+    }
+    state.last_activity = Some(last + shift);
+    state
 }
 
 #[cfg(test)]
@@ -389,7 +410,8 @@ mod tests {
     #[test]
     fn group_instances() {
         let now = Local::now();
-        let public = InstanceInfo::from_location("wrld_a:1~group(grp_x)~groupAccessType(public)~region(jp)", now).unwrap();
+        let public =
+            InstanceInfo::from_location("wrld_a:1~group(grp_x)~groupAccessType(public)~region(jp)", now).unwrap();
         assert_eq!(public.access, InstanceAccess::GroupPublic);
         assert_eq!(public.region, "Japan");
         let plus = InstanceInfo::from_location("wrld_a:1~group(grp_x)~groupAccessType(plus)", now).unwrap();

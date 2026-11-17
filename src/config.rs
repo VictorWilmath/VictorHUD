@@ -9,6 +9,7 @@ use crate::state::{Hand, PanelKind, Placement};
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
+#[derive(Default)]
 pub struct Config {
     pub general: GeneralConfig,
     pub watch: WatchConfig,
@@ -19,21 +20,6 @@ pub struct Config {
     pub vrcx: VrcxConfig,
     /// Where panels were last left, so reopening one puts it back.
     pub layouts: Vec<SavedLayout>,
-}
-
-impl Default for Config {
-    fn default() -> Self {
-        Self {
-            general: GeneralConfig::default(),
-            watch: WatchConfig::default(),
-            interaction: InteractionConfig::default(),
-            desktop: DesktopConfig::default(),
-            media: MediaConfig::default(),
-            notifications: NotificationConfig::default(),
-            vrcx: VrcxConfig::default(),
-            layouts: Vec::new(),
-        }
-    }
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -242,9 +228,8 @@ pub fn default_vrcx_db_path() -> Option<PathBuf> {
 }
 
 pub fn default_vrchat_log_dir() -> Option<PathBuf> {
-    std::env::var_os("USERPROFILE").map(|home| {
-        PathBuf::from(home).join("AppData").join("LocalLow").join("VRChat").join("VRChat")
-    })
+    std::env::var_os("USERPROFILE")
+        .map(|home| PathBuf::from(home).join("AppData").join("LocalLow").join("VRChat").join("VRChat"))
 }
 
 pub fn data_dir() -> PathBuf {

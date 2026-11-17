@@ -197,7 +197,9 @@ impl eframe::App for PreviewApp {
 
                 ui.vertical(|ui| {
                     if ui_ctx.state.panels_hidden {
-                        ui.label(RichText::new("Panels are hidden. Use “Show all” on the watch.").color(palette.text_dim));
+                        ui.label(
+                            RichText::new("Panels are hidden. Use “Show all” on the watch.").color(palette.text_dim),
+                        );
                         return;
                     }
                     ui.horizontal(|ui| {
@@ -222,7 +224,9 @@ impl eframe::App for PreviewApp {
                             }
                         }
                         if self.panels.is_empty() {
-                            ui.label(RichText::new("Open a panel from the watch menu (More).").color(palette.text_faint));
+                            ui.label(
+                                RichText::new("Open a panel from the watch menu (More).").color(palette.text_faint),
+                            );
                         }
                     });
                     ui.add_space(10.0);
@@ -232,7 +236,8 @@ impl eframe::App for PreviewApp {
                     let size = ui::panel_size(panel.kind, Some(16.0 / 9.0));
                     egui::ScrollArea::both().id_salt("preview-panel").show(ui, |ui| {
                         let (rect, _) = ui.allocate_exact_size(size, Sense::hover());
-                        let mut child = ui.new_child(egui::UiBuilder::new().max_rect(rect).layout(Layout::top_down(Align::Min)));
+                        let mut child =
+                            ui.new_child(egui::UiBuilder::new().max_rect(rect).layout(Layout::top_down(Align::Min)));
                         child.set_clip_rect(rect.intersect(ui.clip_rect()));
                         child.multiply_opacity(panel.opacity);
                         let view = (panel.kind == PanelKind::Desktop).then_some(&desktop);
